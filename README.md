@@ -3,6 +3,8 @@ vanillaGallery
 
 A vanilla JS gallery. Simply putting items into a grid and calculate how many items should be next to each other. Up to 24 columns wide.
 
+### [Demo](https://robinpoort.github.io/vanilla-js-gallery/demo/)
+
 ## Markup
 
 ```html
