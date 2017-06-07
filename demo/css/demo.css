@@ -389,3 +389,17 @@ template {
  */
 [hidden] {
   display: none; }
+
+img {
+  max-width: 100%;
+  vertical-align: middle; }
+
+* {
+  box-sizing: border-box; }
+
+body {
+  padding: 20px; }
+
+.gallery__content {
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.2); }
