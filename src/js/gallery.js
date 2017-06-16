@@ -16,41 +16,22 @@
 
     var vanillaGallery = {}; // Object for public APIs
     var supports = 'querySelector' in document && 'addEventListener' in root; // Feature test
-    var settings, eventTimeout;
+    var settings, eventTimeout, maxWidth;
 
     // Default settings
     var defaults = {
         selector: '[data-gallery]',
-        maxWidth: 240
-    };
+        maxWidth: 240,
 
-    var maxWidth = document.querySelector(defaults.selector).getAttribute('data-gallery-itemwidth') || defaults.maxWidth;
+        // Callbacks
+        beforeSetWidth: function () {},
+        afterSetWidth: function () {}
+    };
 
 
     //
     // Methods
     //
-
-    /**
-     * A simple forEach() implementation for Arrays, Objects and NodeLists
-     * @private
-     * @param {Array|Object|NodeList} collection Collection of items to iterate
-     * @param {Function} callback Callback function for each iteration
-     * @param {Array|Object|NodeList} scope Object/NodeList/Array that forEach is iterating over (aka `this`)
-     */
-    var forEach = function (collection, callback, scope) {
-        if (Object.prototype.toString.call(collection) === '[object Object]') {
-            for (var prop in collection) {
-                if (Object.prototype.hasOwnProperty.call(collection, prop)) {
-                    callback.call(scope, collection[prop], prop, collection);
-                }
-            }
-        } else {
-            for (var i = 0, len = collection.length; i < len; i++) {
-                callback.call(scope, collection[i], i, collection);
-            }
-        }
-    };
 
     /**
      * Merge defaults with user options
@@ -98,12 +79,35 @@
     };
 
 
-    // Set Width
-    var setWidth = function() {
-        var gallery = document.querySelector(settings.selector);
+    /**
+     * Set the width of items
+     * @public
+     * @param {Object} defaults Default settings
+     * @param {Object} options User options
+     * @returns {Object} Merged values of defaults and options
+     */
+
+    vanillaGallery.setWidth = function(options) {
+
+        // Merge user options with existing settings or defaults
+        var localSettings = extend(settings || defaults, options || {});
+
+        // Before set width data attribute
+        localSettings.beforeSetWidth(options);
+
+        // Calculate maxWidth
+        maxWidth = document.querySelector(localSettings.selector).getAttribute('data-gallery-itemwidth') || localSettings.maxWidth;
+
+        // Variables
+        var gallery = document.querySelector(localSettings.selector);
         var galleryWidth = parseFloat(window.getComputedStyle(gallery).width),
             items = Math.ceil(galleryWidth / maxWidth);
+
+        // Set attribute
         gallery.setAttribute('data-gallery-items', items);
+
+        // After set width data attribute
+        localSettings.afterSetWidth(options);
     };
 
 
@@ -113,13 +117,34 @@
      * @param  {Function} eventTimeout Timeout function
      * @param  {Object} settings
      */
-    var resizeThrottler = function (event) {
+    var resizeThrottler = function () {
         if ( !eventTimeout ) {
             eventTimeout = setTimeout(function() {
                 eventTimeout = null; // Reset timeout
-                setWidth();
+                vanillaGallery.setWidth();
             }, 200);
         }
+    };
+
+
+    /**
+     * Destroy the current initialization.
+     * @public
+     */
+    vanillaGallery.destroy = function () {
+
+        // If plugin isn't already initialized, stop
+        if ( !settings ) return;
+
+        // Remove event listeners
+        document.removeEventListener('resize', resizeThrottler, false);
+
+        // Remove data attribute
+        document.querySelector(settings.selector).removeAttribute('data-gallery-items');
+
+        // Reset variables
+        settings = null;
+
     };
 
 
@@ -133,6 +158,9 @@
         // feature test
         if ( !supports ) return;
 
+        // Destroy any existing initializations
+        vanillaGallery.destroy();
+
         // Merge user options with defaults
         settings = extend( defaults, options || {} );
 
@@ -140,7 +168,7 @@
         root.addEventListener('resize', resizeThrottler, false);
 
         // Run on default
-        setWidth();
+        vanillaGallery.setWidth();
 
     };
 
