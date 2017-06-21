@@ -92,6 +92,10 @@
         // Merge user options with existing settings or defaults
         var localSettings = extend(settings || defaults, options || {});
 
+        // Find gallery and return if not found
+        var gallery = document.querySelector(localSettings.selector);
+        if ( !gallery ) return;
+
         // Before set width data attribute
         localSettings.beforeSetWidth(options);
 
@@ -99,7 +103,6 @@
         maxWidth = document.querySelector(localSettings.selector).getAttribute('data-gallery-itemwidth') || localSettings.maxWidth;
 
         // Variables
-        var gallery = document.querySelector(localSettings.selector);
         var galleryWidth = parseFloat(window.getComputedStyle(gallery).width),
             items = Math.ceil(galleryWidth / maxWidth);
 
