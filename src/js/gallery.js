@@ -34,6 +34,29 @@
     //
 
     /**
+     * A simple forEach() implementation for Arrays, Objects and NodeLists.
+     * @private
+     * @author Todd Motto
+     * @link   https://github.com/toddmotto/foreach
+     * @param {Array|Object|NodeList} collection Collection of items to iterate
+     * @param {Function}              callback   Callback function for each iteration
+     * @param {Array|Object|NodeList} scope      Object/NodeList/Array that forEach is iterating over (aka `this`)
+     */
+    var forEach = function ( collection, callback, scope ) {
+        if ( Object.prototype.toString.call( collection ) === '[object Object]' ) {
+            for ( var prop in collection ) {
+                if ( Object.prototype.hasOwnProperty.call( collection, prop ) ) {
+                    callback.call( scope, collection[prop], prop, collection );
+                }
+            }
+        } else {
+            for ( var i = collection.length - 1; i >= 0; i-- ) {
+                callback.call( scope, collection[i], i, collection );
+            }
+        }
+    };
+
+    /**
      * Merge defaults with user options
      * @private
      * @param {Object} defaults Default settings
@@ -93,24 +116,57 @@
         var localSettings = extend(settings || defaults, options || {});
 
         // Find gallery and return if not found
-        var gallery = document.querySelector(localSettings.selector);
+        var gallery = document.querySelectorAll(localSettings.selector);
         if ( !gallery ) return;
 
-        // Before set width data attribute
-        localSettings.beforeSetWidth(options);
+        forEach(gallery, function (value) {
 
-        // Calculate maxWidth
-        maxWidth = document.querySelector(localSettings.selector).getAttribute('data-gallery-itemwidth') || localSettings.maxWidth;
+            // Re-set gallery
+            gallery = value;
 
-        // Variables
-        var galleryWidth = parseFloat(window.getComputedStyle(gallery).width),
-            items = Math.ceil(galleryWidth / maxWidth);
+            // Before set width data attribute
+            localSettings.beforeSetWidth(options);
 
-        // Set attribute
-        gallery.setAttribute('data-gallery-items', items);
+            // Calculate maxWidth
+            maxWidth = document.querySelector(localSettings.selector).getAttribute('data-gallery-itemwidth') || localSettings.maxWidth;
 
-        // After set width data attribute
-        localSettings.afterSetWidth(options);
+            // Variables
+            var galleryWidth = parseFloat(window.getComputedStyle(gallery).width),
+                items = Math.ceil(galleryWidth / maxWidth);
+
+            // Set attribute
+            gallery.setAttribute('data-gallery-items', items);
+
+            // After set width data attribute
+            localSettings.afterSetWidth(options);
+        });
+    };
+
+
+    /**
+     * Add class to landscape images
+     * @private
+     * @param {Object} defaults Default settings
+     * @param {Object} options User options
+     * @returns {Object} Merged values of defaults and options
+     */
+
+    var landscapeImages = function() {
+
+        var images = document.querySelectorAll(settings.selector + ' img');
+
+        if ( !images ) return;
+
+        forEach(images, function (value) {
+            var image = value;
+
+            image.onload = function() {
+                var imageStyle = window.getComputedStyle(image);
+                if (parseInt(imageStyle.width, 10) > parseInt(imageStyle.height, 10)) {
+                    image.classList.add('is-landscape');
+                }
+            }
+        });
     };
 
 
@@ -172,6 +228,8 @@
 
         // Run on default
         vanillaGallery.setWidth();
+
+        landscapeImages();
 
     };
 
